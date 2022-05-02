@@ -1,0 +1,202 @@
+{
+  "activity_room": {
+    "width": 16,
+    "height": 16,
+    "x": 186,
+    "y": 82,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "arrow": {
+    "width": 16,
+    "height": 16,
+    "x": 10,
+    "y": 142,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "arrows": {
+    "width": 16,
+    "height": 16,
+    "x": 150,
+    "y": 82,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "bed": {
+    "width": 24,
+    "height": 24,
+    "x": 10,
+    "y": 62,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "brig": {
+    "width": 16,
+    "height": 16,
+    "x": 114,
+    "y": 10,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "build": {
+    "width": 16,
+    "height": 16,
+    "x": 114,
+    "y": 46,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "camera": {
+    "width": 16,
+    "height": 16,
+    "x": 10,
+    "y": 106,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "canteen": {
+    "width": 16,
+    "height": 16,
+    "x": 46,
+    "y": 106,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "channel": {
+    "width": 16,
+    "height": 16,
+    "x": 82,
+    "y": 106,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "door": {
+    "width": 16,
+    "height": 16,
+    "x": 150,
+    "y": 10,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "duty_room": {
+    "width": 16,
+    "height": 16,
+    "x": 150,
+    "y": 46,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "end": {
+    "width": 32,
+    "height": 32,
+    "x": 10,
+    "y": 10,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "hall": {
+    "width": 18,
+    "height": 18,
+    "x": 54,
+    "y": 62,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "home": {
+    "width": 16,
+    "height": 16,
+    "x": 46,
+    "y": 142,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "office": {
+    "width": 16,
+    "height": 16,
+    "x": 82,
+    "y": 142,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "parking": {
+    "width": 16,
+    "height": 16,
+    "x": 118,
+    "y": 142,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "second_door": {
+    "width": 16,
+    "height": 16,
+    "x": 186,
+    "y": 10,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "shower_room": {
+    "width": 16,
+    "height": 16,
+    "x": 186,
+    "y": 46,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "start": {
+    "width": 32,
+    "height": 32,
+    "x": 62,
+    "y": 10,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "store": {
+    "width": 16,
+    "height": 16,
+    "x": 186,
+    "y": 118,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "teaching_building": {
+    "width": 16,
+    "height": 16,
+    "x": 10,
+    "y": 178,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "toilet": {
+    "width": 16,
+    "height": 16,
+    "x": 46,
+    "y": 178,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "wall": {
+    "width": 16,
+    "height": 16,
+    "x": 82,
+    "y": 178,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "water_heater_room": {
+    "width": 16,
+    "height": 16,
+    "x": 118,
+    "y": 178,
+    "pixelRatio": 1,
+    "visible": true
+  },
+  "xiyilou": {
+    "width": 16,
+    "height": 16,
+    "x": 154,
+    "y": 178,
+    "pixelRatio": 1,
+    "visible": true
+  }
+}
