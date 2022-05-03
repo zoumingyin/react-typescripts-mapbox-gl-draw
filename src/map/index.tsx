@@ -960,14 +960,24 @@ const data = {
 		}
 	}]
 }
+
+const mode: Record<string, string> = {
+	'draw_line_string': 'line',
+	'draw_polygon': 'polygon',
+	'draw_point': 'point',
+}
 export const Map: React.FC = () => {
 	const mapInput = useRef(null)
 	const sceneRef = useRef<any>()
 	const drawRef = useRef<any>()
 	const updateArea = (event: any) => {
 		const map = sceneRef.current
+
+		if (!drawRef.current) return
+		const { current: draw } = drawRef
+		const currMode: string = draw.getMode()
 		const filterLayers: string[] = map.getStyle().layers.filter(((layer: Record<string, any>) => {
-			return layer.id.includes('polygon')
+			return layer.id.includes(mode[currMode])
 		})).map((layer: Record<string, any>) => {
 			return layer.id
 		})
@@ -975,8 +985,6 @@ export const Map: React.FC = () => {
 			map.moveLayer(layer)
 		})
 
-		if (!drawRef.current) return
-		const { current: draw } = drawRef
 		const data = draw.getAll();
 		const answer = document.getElementById('calculated-area') as HTMLElement;
 
@@ -1032,7 +1040,11 @@ export const Map: React.FC = () => {
 				},
 				'layout': {},
 				'paint': {
-					'fill-color': '#29323B',
+					'fill-color': [
+						'case',
+						['boolean', ['has', 'fill-color'], false],
+						['get', 'fill-color'], 'black'
+					]
 				},
 			});
 			mapbox.addLayer({
