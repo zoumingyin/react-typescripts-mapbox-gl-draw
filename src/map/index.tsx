@@ -1,10 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { GetMap } from './get-scene'
 import * as turf from '@turf/turf'
 import { Feature } from '@turf/turf'
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import './mapbox-gl.css'
 import { Box, Typography } from '@mui/material'
+import { TreeView, TreeItem } from '@mui/lab'
+import { ExpandMore, ChevronRight } from '@mui/icons-material'
 const data = {
 	"type": "FeatureCollection",
 	"features": [{
@@ -19,7 +21,7 @@ const data = {
 			"resparentid": "00000000-0000-1388-0000-000010030a14",
 			"resid": "00000000-0000-1388-0000-00001006e12e",
 			"icon": "build",
-			"fill-color": "red"
+			"fillColor": "red"
 		},
 		"geometry": {
 			"type": "Polygon",
@@ -44,7 +46,7 @@ const data = {
 			"restypeid": "7e9f7820-aa3a-46cd-b35a-9cacaa19e013",
 			"resparentid": "00000000-0000-1388-0000-000010030a14",
 			"resid": "00000000-0000-1388-0000-00001006e136",
-			"fill-color": "blue"
+			"fillColor": "blue"
 		},
 		"geometry": {
 			"type": "Polygon",
@@ -970,11 +972,18 @@ export const Map: React.FC = () => {
 	const mapInput = useRef(null)
 	const sceneRef = useRef<any>()
 	const drawRef = useRef<any>()
+	const featureRef = useRef<any>()
+	const [featureData, setFeatureData] = useState<Record<string, any>>()
 	const updateArea = (event: any) => {
+		console.log(event.type)
+		const feature = event.features[0]
+		const props = featureRef.current
 		const map = sceneRef.current
-
 		if (!drawRef.current) return
 		const { current: draw } = drawRef
+		for (const prop in props) {
+			feature.properties[prop] = props[prop]
+		}
 		const currMode: string = draw.getMode()
 		const filterLayers: string[] = map.getStyle().layers.filter(((layer: Record<string, any>) => {
 			return layer.id.includes(mode[currMode])
@@ -985,19 +994,63 @@ export const Map: React.FC = () => {
 			map.moveLayer(layer)
 		})
 
-		const data = draw.getAll();
 		const answer = document.getElementById('calculated-area') as HTMLElement;
-
-		if (data.features.length > 0) {
-			const area = turf.area(data);
+		const collection = turf.featureCollection([feature])
+		console.log("🚀 ~ file: index.tsx ~ line 1002 ~ updateArea ~ collection", collection)
+		if (collection.features.length > 0) {
+			const area = turf.area(collection);
 			const rounded_area = Math.round(area * 100) / 100;
 			answer.innerHTML = '<p><strong>' + rounded_area + '</strong></p><p>square meters</p>';
 		} else {
 			answer.innerHTML = '';
 			if (event.type !== 'draw.delete') alert("Use the draw tools to draw a polygon!");
 		}
-	}
+		// map.addLayer({
+		// 	'id': 'maine1',
+		// 	'type': 'fill',
+		// 	'source': {
+		// 		'type': 'geojson',
+		// 		'data': collection
+		// 	},
+		// 	'layout': {},
+		// 	'paint': {
+		// 		'fill-color': [
+		// 			'case',
+		// 			['boolean', ['has', 'fillColor'], false],
+		// 			['get', 'fillColor'], '#29323B'
+		// 		]
+		// 	},
+		// });
+		const floorData = JSON.parse(JSON.stringify(collection))
+		floorData.features.forEach((item: any, index: number) => {
+			const pol = item.geometry.coordinates
+			const polygon = turf.polygon(pol)
+			const centers: any = turf.centerOfMass(polygon)
+			floorData.features[index].geometry.coordinates = centers.geometry.coordinates
+			floorData.features[index].geometry.type = 'Point'
+		})
+		map.addLayer({
+			id: 'floorBuildLineId2',
+			type: 'symbol',
+			source: {
+				type: 'geojson',
+				data: floorData,
+			},
+			layout: {
+				'icon-image': ['get', 'icon'],
+				'text-field': ['get', 'resname'],
+				'text-font': ['Open Sans Italic'],
+				'text-offset': [0, 0.7],
+				'text-anchor': 'top',
+				'text-size': 12,
+				'icon-allow-overlap': true,
+				'icon-ignore-placement': true,
+				'text-optional': true,
+			},
+			paint: { 'text-color': 'white' },
+		})
 
+	}
 	let fea: any, propertiesList: any = [];
 	useEffect(() => {
 		const mapDom: any = mapInput.current
@@ -1042,8 +1095,8 @@ export const Map: React.FC = () => {
 				'paint': {
 					'fill-color': [
 						'case',
-						['boolean', ['has', 'fill-color'], false],
-						['get', 'fill-color'], 'black'
+						['boolean', ['has', 'fillColor'], false],
+						['get', 'fillColor'], '#29323B'
 					]
 				},
 			});
@@ -1073,7 +1126,7 @@ export const Map: React.FC = () => {
 				},
 				layout: {
 					'icon-image': ['get', 'icon'],
-					'text-field': ['get', 'resname'],
+					'text-field': ['get', 'name'],
 					'text-font': ['Open Sans Italic'],
 					'text-offset': [0, 0.7],
 					'text-anchor': 'top',
@@ -1086,13 +1139,9 @@ export const Map: React.FC = () => {
 			})
 		})
 		mapbox.on('draw.create', updateArea);
-
 		mapbox.on('draw.delete', updateArea);
 
 		mapbox.on('draw.update', updateArea);
-		mapbox.on('draw.update', (e) => {
-			console.log('update:', e)
-		})
 
 		mapbox.on("draw.selectionchange", () => {
 			fea = mapDraw.getSelected()
@@ -1192,10 +1241,11 @@ export const Map: React.FC = () => {
 
 	}, [])
 	return (<Box width={1} height={1} position='relative'>
+
 		<Box className='calculation-box' width={150} height={75} position='absolute'
 			bottom={40} left={10} p={15} textAlign='center' color='red' zIndex={1}>
 			<Typography>Draw a polygon using the draw tools</Typography>
-
+			{JSON.stringify(featureData)}
 			<Box id='calculated-area'></Box>
 		</Box>
 		<Box id='propertiesTableBox' position='absolute' top={0} right={0} bgcolor='white' zIndex={1}></Box>
@@ -1205,5 +1255,33 @@ export const Map: React.FC = () => {
 			overflow: 'hidden',
 			position: 'relative',
 		}} id='map' ref={mapInput}></div>
+
+		<Box position='absolute' top={100} right={2} zIndex={1} padding={1} bgcolor="white">
+			<TreeView
+				aria-label="file system navigator"
+				defaultCollapseIcon={<ExpandMore />}
+				defaultExpandIcon={<ChevronRight />}
+				sx={{ height: 240, flexGrow: 1, maxWidth: 400, overflowY: 'auto' }}
+			>
+				<TreeItem nodeId="1" label="Applications">
+					<TreeItem nodeId="2" label="Calendar" onClick={() => {
+						const obj = {
+							id: '111',
+							name: '测试',
+							fillColor: 'yellow',
+							"icon": "build",
+						}
+						featureRef.current = obj
+					}} />
+				</TreeItem>
+				<TreeItem nodeId="5" label="Documents">
+					<TreeItem nodeId="10" label="OSS" />
+					<TreeItem nodeId="6" label="MUI">
+						<TreeItem nodeId="8" label="index.js" />
+					</TreeItem>
+				</TreeItem>
+			</TreeView>
+		</Box>
+
 	</Box>)
 }
