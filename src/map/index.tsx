@@ -5,8 +5,10 @@ import { Feature } from '@turf/turf'
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import './mapbox-gl.css'
 import { Box, Typography } from '@mui/material'
+import { v1 as uuidv1 } from 'uuid';
 import { TreeView, TreeItem } from '@mui/lab'
 import { ExpandMore, ChevronRight } from '@mui/icons-material'
+import { creatFillLayer, creatSymbolLayer, getPolygonPoint } from './util'
 const data = {
 	"type": "FeatureCollection",
 	"features": [{
@@ -962,7 +964,11 @@ const data = {
 		}
 	}]
 }
-
+enum DrawMode {
+	DRAW_LINE_STRING = "draw_line_string",
+	DRAW_POLYGON = "draw_polygon",
+	DRAW_POINT = "draw_point",
+}
 const mode: Record<string, string> = {
 	'draw_line_string': 'line',
 	'draw_polygon': 'polygon',
@@ -985,18 +991,8 @@ export const Map: React.FC = () => {
 			feature.properties[prop] = props[prop]
 		}
 		const currMode: string = draw.getMode()
-		const filterLayers: string[] = map.getStyle().layers.filter(((layer: Record<string, any>) => {
-			return layer.id.includes(mode[currMode])
-		})).map((layer: Record<string, any>) => {
-			return layer.id
-		})
-		filterLayers.forEach(layer => {
-			map.moveLayer(layer)
-		})
-
 		const answer = document.getElementById('calculated-area') as HTMLElement;
-		const collection = turf.featureCollection([feature])
-		console.log("🚀 ~ file: index.tsx ~ line 1002 ~ updateArea ~ collection", collection)
+		const collection = turf.featureCollection([feature]) as any
 		if (collection.features.length > 0) {
 			const area = turf.area(collection);
 			const rounded_area = Math.round(area * 100) / 100;
@@ -1005,51 +1001,37 @@ export const Map: React.FC = () => {
 			answer.innerHTML = '';
 			if (event.type !== 'draw.delete') alert("Use the draw tools to draw a polygon!");
 		}
-		// map.addLayer({
-		// 	'id': 'maine1',
-		// 	'type': 'fill',
-		// 	'source': {
-		// 		'type': 'geojson',
-		// 		'data': collection
-		// 	},
-		// 	'layout': {},
-		// 	'paint': {
-		// 		'fill-color': [
-		// 			'case',
-		// 			['boolean', ['has', 'fillColor'], false],
-		// 			['get', 'fillColor'], '#29323B'
-		// 		]
-		// 	},
-		// });
-		const floorData = JSON.parse(JSON.stringify(collection))
-		floorData.features.forEach((item: any, index: number) => {
-			const pol = item.geometry.coordinates
-			const polygon = turf.polygon(pol)
-			const centers: any = turf.centerOfMass(polygon)
-			floorData.features[index].geometry.coordinates = centers.geometry.coordinates
-			floorData.features[index].geometry.type = 'Point'
-		})
-		map.addLayer({
-			id: 'floorBuildLineId2',
-			type: 'symbol',
-			source: {
-				type: 'geojson',
-				data: floorData,
-			},
-			layout: {
-				'icon-image': ['get', 'icon'],
-				'text-field': ['get', 'resname'],
-				'text-font': ['Open Sans Italic'],
-				'text-offset': [0, 0.7],
-				'text-anchor': 'top',
-				'text-size': 12,
-				'icon-allow-overlap': true,
-				'icon-ignore-placement': true,
-				'text-optional': true,
-			},
-			paint: { 'text-color': 'white' },
-		})
+		if (event.type === 'draw.create') {
+			switch (currMode) {
+				case DrawMode.DRAW_POLYGON: {
+					map.addLayer(creatFillLayer(collection));
+					map.addLayer(creatSymbolLayer(getPolygonPoint(collection)));
 
+					break;
+				}
+				case DrawMode.DRAW_POINT: {
+					map.addLayer(creatSymbolLayer(feature));
+					// draw.set({
+					// 	type: 'FeatureCollection',
+					// 	features: [{
+					// 	  type: 'Feature',
+					// 	  properties: {},
+					// 	  id: 'example-id',
+					// 	  geometry: { type: 'Point', coordinates: [0, 0] }
+					// 	}]
+					//   });
+					break;
+				}
+
+				case DrawMode.DRAW_LINE_STRING:
+
+					break;
+
+				default:
+					break;
+			}
+			draw.deleteAll()
+		}
 	}
 	let fea: any, propertiesList: any = [];
 	useEffect(() => {
@@ -1137,11 +1119,28 @@ export const Map: React.FC = () => {
 				},
 				paint: { 'text-color': 'white' },
 			})
+
 		})
 		mapbox.on('draw.create', updateArea);
 		mapbox.on('draw.delete', updateArea);
 
 		mapbox.on('draw.update', updateArea);
+		mapbox.on('draw.modechange', e => {
+			const props = featureRef.current
+			if (!props) {
+				alert('请选择一个结点')
+				return
+			}
+			const filterLayers: string[] = mapbox.getStyle().layers.filter(((layer: Record<string, any>) => {
+				return layer.id.includes(mode[e.mode])
+			})).map((layer: Record<string, any>) => {
+				return layer.id
+			})
+			filterLayers.forEach(layer => {
+				mapbox.moveLayer(layer)
+			})
+
+		});
 
 		mapbox.on("draw.selectionchange", () => {
 			fea = mapDraw.getSelected()
@@ -1224,16 +1223,27 @@ export const Map: React.FC = () => {
 			} else {
 				const source = mapbox.getSource(featureSource) as any
 				const sourceData = source.serialize().data
-				const { features } = sourceData
-				const idx = features.findIndex((feature: Feature) => {
-					return feature.properties?.id === id
-				})
-				console.log(feature)
-				features.splice(idx, 1)
-				source.setData(sourceData)
-				const fid = mapDraw.add(feature)
-				console.log(fid)
-				mapDraw.setFeatureProperty(fid[0], 'source', featureSource)
+				const { type } = sourceData
+				if (type === 'Feature') {
+					mapbox.setLayoutProperty(featureSource, 'visibility', 'none')
+					const fid = mapDraw.add(sourceData)
+					console.log(fid)
+					mapDraw.setFeatureProperty(fid[0], 'source', featureSource)
+					const s = mapbox.getSource('mapbox-gl-draw-hot') as any
+					s.setData(sourceData)
+				} else {
+					const { features } = sourceData
+					const idx = features.findIndex((feature: Feature) => {
+						return feature.properties?.id === id
+					})
+					console.log(feature)
+					features.splice(idx, 1)
+					source.setData(sourceData)
+					const fid = mapDraw.add(feature)
+					console.log(fid)
+					mapDraw.setFeatureProperty(fid[0], 'source', featureSource)
+				}
+
 			}
 
 

@@ -160,7 +160,47 @@ export class GetMap {
 						"line-width": 3
 					}
 				},
+				{
+					'id': 'highlight-active-points',
+					'type': 'symbol',
+					'filter': ['all',
+						['==', '$type', 'Point'],
+						['==', 'meta', 'feature'],
+						['==', 'active', 'true']],
+					layout: {
+						'icon-image': ['get', 'icon'],
+						'text-field': '达到撒打算多',
+						'text-font': ['Open Sans Italic'],
+						'text-offset': [0, 0.7],
+						'text-anchor': 'top',
+						'text-size': 12,
+						'icon-allow-overlap': true,
+						'icon-ignore-placement': true,
+						'text-optional': true,
+					},
+					paint: { 'text-color': 'white' },
 
+				},
+				{
+					'id': 'points-are-blue',
+					'type': 'symbol',
+					'filter': ['all',
+						['==', '$type', 'Point'],
+						['==', 'meta', 'feature'],
+						['==', 'active', 'false']],
+					layout: {
+						'icon-image': ['get', 'icon'],
+						'text-field': '达到撒打算多',
+						'text-font': ['Open Sans Italic'],
+						'text-offset': [0, 0.7],
+						'text-anchor': 'top',
+						'text-size': 12,
+						'icon-allow-overlap': true,
+						'icon-ignore-placement': true,
+						'text-optional': true,
+					},
+					paint: { 'text-color': 'white' },
+				}
 			]
 		})
 		this._map.addControl(this._draw, 'top-left')
